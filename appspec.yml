@@ -3,7 +3,7 @@ Resources:
   - TargetService:
       Type: AWS::ECS::Service
       Properties:
-        TaskDefinition: "PLACEHOLDER"  # Will be replaced automatically
+        TaskDefinition: "<TASK_DEFINITION>"
         LoadBalancerInfo:
-          ContainerName: "flask-app"
+          ContainerName: "app"
           ContainerPort: 80
