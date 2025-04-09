@@ -1,22 +1,19 @@
 version: 0.2
-
 phases:
   pre_build:
     commands:
       - echo Logging in to Amazon ECR...
-      - aws ecr get-login-password | docker login --username AWS --password-stdin 285951302175.dkr.ecr.us-east-1.amazonaws.com
+      - $(aws ecr get-login --no-include-email --region $AWS_REGION)
+      - IMAGE_TAG=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
   build:
     commands:
-      - echo Build started on `date`
-      - docker build -t ecomiq-backend .
-      - docker tag ecomiq-backend:latest 285951302175.dkr.ecr.us-east-1.amazonaws.com/ecomiq-backend:latest
+      - docker build -t $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/flask-app:$IMAGE_TAG .
+      - docker tag $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/flask-app:$IMAGE_TAG $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/flask-app:latest
   post_build:
     commands:
-      - docker push 285951302175.dkr.ecr.us-east-1.amazonaws.com/ecomiq-backend:latest
-      - printf '{"ImageURI":"%s"}' 285951302175.dkr.ecr.us-east-1.amazonaws.com/ecomiq-backend:latest > imageDetail.json
-
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/flask-app:$IMAGE_TAG
+      - docker push $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/flask-app:latest
+      - echo '[{\"name\":\"flask-final-app\",\"imageUri\":\"'$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/flask-app:$IMAGE_TAG'\"}]' > imagedefinitions.json
 artifacts:
   files:
-    - appspec.yaml
-    - taskdef.json
-    - imageDetail.json
+    - imagedefinitions.json
